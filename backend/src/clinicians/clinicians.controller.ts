@@ -6,40 +6,52 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { CliniciansService } from './clinicians.service';
-import { CreateClinicianDto } from './dto/create-clinician.dto';
-import { UpdateClinicianDto } from './dto/update-clinician.dto';
+import {
+  CreateClinicianRequestDto,
+  ClinicianInfoDto,
+  UpdateClinicianDto,
+  ClinicianDeletedDto,
+  PaginatedCliniciansInfoDto,
+} from './dto/clinician-crud.dto';
+import { PaginationRequestDto } from 'src/common/dto/pagination.dto';
 
 @Controller('clinicians')
 export class CliniciansController {
   constructor(private readonly cliniciansService: CliniciansService) {}
 
   @Post()
-  create(@Body() createClinicianDto: CreateClinicianDto) {
+  create(
+    @Body() createClinicianDto: CreateClinicianRequestDto,
+  ): Promise<ClinicianInfoDto> {
     return this.cliniciansService.create(createClinicianDto);
   }
 
   @Get()
-  findAll() {
-    return this.cliniciansService.findAll();
+  findAll(
+    @Query() query: PaginationRequestDto,
+  ): Promise<PaginatedCliniciansInfoDto> {
+    return this.cliniciansService.findAll(query);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.cliniciansService.findOne(+id);
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ClinicianInfoDto> {
+    return this.cliniciansService.findOne(id);
   }
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateClinicianDto: UpdateClinicianDto,
-  ) {
-    return this.cliniciansService.update(+id, updateClinicianDto);
+  ): Promise<ClinicianInfoDto> {
+    return this.cliniciansService.update(id, updateClinicianDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.cliniciansService.remove(+id);
+  remove(@Param('id', ParseUUIDPipe) id: string): Promise<ClinicianDeletedDto> {
+    return this.cliniciansService.remove(id);
   }
 }

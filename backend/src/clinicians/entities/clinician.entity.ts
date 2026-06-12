@@ -1,5 +1,5 @@
-import { Gender } from 'src/patients/entities/patient.entity';
 import { Visit } from 'src/visits/entities/visit.entity';
+import { Gender } from 'src/common/enums/gender.enum';
 import {
   Column,
   Entity,

@@ -1,3 +1,4 @@
+import { Gender } from 'src/common/enums/gender.enum';
 import { Visit } from 'src/visits/entities/visit.entity';
 import {
   Column,
@@ -8,13 +9,6 @@ import {
   DeleteDateColumn,
   OneToMany,
 } from 'typeorm';
-
-export enum Gender {
-  male = 'male',
-  female = 'female',
-  other = 'other',
-  unknown = 'unknown',
-}
 
 @Entity()
 export class Patient {

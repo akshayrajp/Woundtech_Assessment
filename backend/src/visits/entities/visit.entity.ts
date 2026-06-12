@@ -8,9 +8,8 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   ManyToOne,
+  JoinColumn,
 } from 'typeorm';
-import { ManyToMany } from 'typeorm/browser';
-import { JoinColumn } from 'typeorm/browser';
 
 @Entity()
 export class Visit {
