@@ -1,14 +1,24 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-import { useClinician } from "@/features/clinicians/clinician.hooks";
+import { DeleteButton } from "@/components/DeleteButton";
+
+import {
+  useClinician,
+  useDeleteClinician,
+} from "@/features/clinicians/clinician.hooks";
 
 export function ViewClinicianPage() {
   const { id } = useParams<{ id: string }>();
 
+  const navigate = useNavigate();
+
   const { data: clinician, isLoading } = useClinician(id ?? "");
+
+  const deleteClinician = useDeleteClinician();
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -23,9 +33,22 @@ export function ViewClinicianPage() {
       <CardHeader className="flex flex-row justify-between">
         <CardTitle>Clinician Details</CardTitle>
 
-        <Button asChild>
-          <Link to={`/clinicians/${clinician.id}/edit`}>Edit</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild>
+            <Link to={`/clinicians/${clinician.id}/edit`}>Edit</Link>
+          </Button>
+
+          <DeleteButton
+            entityName="clinician"
+            onDelete={async () => {
+              await deleteClinician.mutateAsync(clinician.id);
+
+              toast.success("Clinician deleted");
+
+              navigate("/clinicians");
+            }}
+          />
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-4">

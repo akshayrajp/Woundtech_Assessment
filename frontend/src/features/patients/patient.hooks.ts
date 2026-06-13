@@ -4,6 +4,7 @@ import {
   patientsControllerCreate,
   patientsControllerFindAll,
   patientsControllerFindOne,
+  patientsControllerRemove,
   patientsControllerUpdate,
 } from "@/api/sdk.gen";
 
@@ -83,6 +84,26 @@ export function useUpdatePatient(id: string) {
 
       queryClient.invalidateQueries({
         queryKey: ["patient", id],
+      });
+    },
+  });
+}
+
+export function useDeletePatient() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await patientsControllerRemove({
+        path: { id },
+      });
+
+      return res.data;
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["patients"],
       });
     },
   });

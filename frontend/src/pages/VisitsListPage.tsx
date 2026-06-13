@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SortIcon } from "@/components/SortIcon";
+import { useDebounce } from "use-debounce";
 
 import {
   Table,
@@ -26,6 +27,7 @@ export function VisitsListPage() {
   const [page, setPage] = useState(1);
 
   const [search, setSearch] = useState("");
+  const [debouncedSearch] = useDebounce(search, 300);
 
   const [sortBy, setSortBy] = useState<SortDirection>("DESC");
 
@@ -46,7 +48,7 @@ export function VisitsListPage() {
   const { data, isLoading } = useVisits({
     page,
     limit: 10,
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     orderBy: "visitedAt",
     sortBy,
     patientIds: patientIds.length > 0 ? patientIds : undefined,

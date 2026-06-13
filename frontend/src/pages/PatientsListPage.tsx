@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { usePatients } from "@/features/patients/patient.hooks";
+import { useDebounce } from "use-debounce";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -25,6 +26,7 @@ export function PatientsListPage() {
   const [limit] = useState(10);
 
   const [search, setSearch] = useState("");
+  const [debouncedSearch] = useDebounce(search, 300);
 
   const [orderBy, setOrderBy] = useState<PatientOrderBy>("createdAt");
 
@@ -33,7 +35,7 @@ export function PatientsListPage() {
   const { data, isLoading } = usePatients({
     page,
     limit,
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     orderBy,
     sortBy,
   });

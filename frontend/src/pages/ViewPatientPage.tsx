@@ -1,14 +1,24 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-import { usePatient } from "@/features/patients/patient.hooks";
+import { DeleteButton } from "@/components/DeleteButton";
+
+import {
+  useDeletePatient,
+  usePatient,
+} from "@/features/patients/patient.hooks";
 
 export function ViewPatientPage() {
   const { id } = useParams<{ id: string }>();
 
+  const navigate = useNavigate();
+
   const { data: patient, isLoading } = usePatient(id ?? "");
+
+  const deletePatient = useDeletePatient();
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -23,9 +33,22 @@ export function ViewPatientPage() {
       <CardHeader className="flex flex-row justify-between">
         <CardTitle>Patient Details</CardTitle>
 
-        <Button asChild>
-          <Link to={`/patients/${patient.id}/edit`}>Edit</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild>
+            <Link to={`/patients/${patient.id}/edit`}>Edit</Link>
+          </Button>
+
+          <DeleteButton
+            entityName="patient"
+            onDelete={async () => {
+              await deletePatient.mutateAsync(patient.id);
+
+              toast.success("Patient deleted");
+
+              navigate("/patients");
+            }}
+          />
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-4">

@@ -1,15 +1,22 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Button } from "@/components/ui/button";
 
-import { useVisit } from "@/features/visits/visit.hooks";
+import { DeleteButton } from "@/components/DeleteButton";
+
+import { useDeleteVisit, useVisit } from "@/features/visits/visit.hooks";
 
 export function ViewVisitPage() {
   const { id } = useParams<{ id: string }>();
 
+  const navigate = useNavigate();
+
   const { data: visit, isLoading } = useVisit(id ?? "");
+
+  const deleteVisit = useDeleteVisit();
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -24,9 +31,22 @@ export function ViewVisitPage() {
       <CardHeader className="flex flex-row justify-between">
         <CardTitle>Visit Details</CardTitle>
 
-        <Button asChild>
-          <Link to={`/visits/${visit.id}/edit`}>Edit</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild>
+            <Link to={`/visits/${visit.id}/edit`}>Edit</Link>
+          </Button>
+
+          <DeleteButton
+            entityName="visit"
+            onDelete={async () => {
+              await deleteVisit.mutateAsync(visit.id);
+
+              toast.success("Visit deleted");
+
+              navigate("/visits");
+            }}
+          />
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-4">

@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SortIcon } from "@/components/SortIcon";
 
+import { useDebounce } from "use-debounce";
+
 import {
   Table,
   TableBody,
@@ -31,6 +33,7 @@ export function CliniciansListPage() {
   const [limit] = useState(10);
 
   const [search, setSearch] = useState("");
+  const [debouncedSearch] = useDebounce(search, 300);
 
   const [orderBy, setOrderBy] = useState<ClinicianOrderBy>("createdAt");
 
@@ -39,7 +42,7 @@ export function CliniciansListPage() {
   const { data, isLoading } = useClinicians({
     page,
     limit,
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     orderBy,
     sortBy,
   });
