@@ -2,11 +2,14 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { useVisits } from "@/features/visits/visit.hooks";
+import { usePatients } from "@/features/patients/patient.hooks";
+import { useClinicians } from "@/features/clinicians/clinician.hooks";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SortIcon } from "@/components/SortIcon";
 
 import {
   Table,
@@ -26,12 +29,28 @@ export function VisitsListPage() {
 
   const [sortBy, setSortBy] = useState<SortDirection>("DESC");
 
+  const [patientIds, setPatientIds] = useState<string[]>([]);
+
+  const [clinicianIds, setClinicianIds] = useState<string[]>([]);
+
+  const { data: patients } = usePatients({
+    page: 1,
+    limit: 100,
+  });
+
+  const { data: clinicians } = useClinicians({
+    page: 1,
+    limit: 100,
+  });
+
   const { data, isLoading } = useVisits({
     page,
     limit: 10,
     search: search || undefined,
     orderBy: "visitedAt",
     sortBy,
+    patientIds: patientIds.length > 0 ? patientIds : undefined,
+    clinicianIds: clinicianIds.length > 0 ? clinicianIds : undefined,
   });
 
   const totalPages = data ? Math.ceil(data.total / data.limit) : 0;
@@ -47,14 +66,62 @@ export function VisitsListPage() {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <Input
-          placeholder="Search notes..."
-          value={search}
-          onChange={(e) => {
-            setPage(1);
-            setSearch(e.target.value);
-          }}
-        />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <Input
+            placeholder="Search notes..."
+            value={search}
+            onChange={(e) => {
+              setPage(1);
+              setSearch(e.target.value);
+            }}
+          />
+
+          <select
+            className="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm"
+            value={patientIds[0] ?? ""}
+            onChange={(e) => {
+              setPage(1);
+              setPatientIds(e.target.value ? [e.target.value] : []);
+            }}
+          >
+            <option value="">All Patients</option>
+
+            {patients?.data.map((patient) => (
+              <option key={patient.id} value={patient.id}>
+                {patient.givenName} {patient.familyName}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm"
+            value={clinicianIds[0] ?? ""}
+            onChange={(e) => {
+              setPage(1);
+              setClinicianIds(e.target.value ? [e.target.value] : []);
+            }}
+          >
+            <option value="">All Clinicians</option>
+
+            {clinicians?.data.map((clinician) => (
+              <option key={clinician.id} value={clinician.id}>
+                {clinician.givenName} {clinician.familyName}
+              </option>
+            ))}
+          </select>
+
+          <Button
+            variant="outline"
+            onClick={() => {
+              setSearch("");
+              setPatientIds([]);
+              setClinicianIds([]);
+              setPage(1);
+            }}
+          >
+            Clear Filters
+          </Button>
+        </div>
 
         {isLoading && <div>Loading...</div>}
 
@@ -64,17 +131,23 @@ export function VisitsListPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Patient</TableHead>
+
                   <TableHead>Clinician</TableHead>
+
                   <TableHead>
                     <button
+                      className="flex items-center font-medium"
                       onClick={() =>
                         setSortBy((prev) => (prev === "ASC" ? "DESC" : "ASC"))
                       }
                     >
                       Visited At
+                      <SortIcon active direction={sortBy} />
                     </button>
                   </TableHead>
+
                   <TableHead>Notes</TableHead>
+
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -110,11 +183,17 @@ export function VisitsListPage() {
               </TableBody>
             </Table>
 
+            {data.data.length === 0 && (
+              <div className="py-8 text-center text-muted-foreground">
+                No visits found.
+              </div>
+            )}
+
             <div className="flex items-center justify-between">
               <Button
                 variant="outline"
                 disabled={page === 1}
-                onClick={() => setPage((p) => p - 1)}
+                onClick={() => setPage((prev) => prev - 1)}
               >
                 Previous
               </Button>
@@ -126,7 +205,7 @@ export function VisitsListPage() {
               <Button
                 variant="outline"
                 disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
+                onClick={() => setPage((prev) => prev + 1)}
               >
                 Next
               </Button>

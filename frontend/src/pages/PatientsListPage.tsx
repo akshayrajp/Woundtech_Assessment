@@ -16,10 +16,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SortIcon, type SortDirection } from "@/components/SortIcon";
 
 type PatientOrderBy = "givenName" | "familyName" | "dateOfBirth" | "createdAt";
-
-type SortDirection = "ASC" | "DESC";
 
 export function PatientsListPage() {
   const [page, setPage] = useState(1);
@@ -78,28 +77,56 @@ export function PatientsListPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>
-                    <button onClick={() => toggleSort("givenName")}>
+                    <button
+                      className="flex items-center font-medium"
+                      onClick={() => toggleSort("givenName")}
+                    >
                       Given Name
+                      <SortIcon
+                        active={orderBy === "givenName"}
+                        direction={sortBy}
+                      />
                     </button>
                   </TableHead>
 
                   <TableHead>
-                    <button onClick={() => toggleSort("familyName")}>
+                    <button
+                      className="flex items-center font-medium"
+                      onClick={() => toggleSort("familyName")}
+                    >
                       Family Name
+                      <SortIcon
+                        active={orderBy === "familyName"}
+                        direction={sortBy}
+                      />
                     </button>
                   </TableHead>
 
                   <TableHead>
-                    <button onClick={() => toggleSort("dateOfBirth")}>
+                    <button
+                      className="flex items-center font-medium"
+                      onClick={() => toggleSort("dateOfBirth")}
+                    >
                       DOB
+                      <SortIcon
+                        active={orderBy === "dateOfBirth"}
+                        direction={sortBy}
+                      />
                     </button>
                   </TableHead>
 
                   <TableHead>Gender</TableHead>
 
                   <TableHead>
-                    <button onClick={() => toggleSort("createdAt")}>
+                    <button
+                      className="flex items-center font-medium"
+                      onClick={() => toggleSort("createdAt")}
+                    >
                       Created At
+                      <SortIcon
+                        active={orderBy === "createdAt"}
+                        direction={sortBy}
+                      />
                     </button>
                   </TableHead>
 
@@ -137,6 +164,12 @@ export function PatientsListPage() {
                 ))}
               </TableBody>
             </Table>
+
+            {data.data.length === 0 && (
+              <div className="py-8 text-center text-muted-foreground">
+                No patients found.
+              </div>
+            )}
 
             <div className="flex items-center justify-between">
               <Button
