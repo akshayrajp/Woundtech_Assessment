@@ -8,9 +8,13 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   OneToMany,
+  Index,
 } from 'typeorm';
 
 @Entity({ name: 'clinicians' })
+@Index(['givenName'])
+@Index(['familyName'])
+@Index(['createdAt'])
 export class Clinician {
   @PrimaryGeneratedColumn('uuid')
   id: string;

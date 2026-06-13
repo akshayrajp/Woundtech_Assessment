@@ -9,9 +9,15 @@ import {
   DeleteDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 
 @Entity({ name: 'visits' })
+@Index(['patient'])
+@Index(['clinician'])
+@Index(['visitedAt'])
+@Index(['createdAt'])
+@Index(['notes'])
 export class Visit {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -26,14 +32,20 @@ export class Visit {
   patientId: string;
 
   @JoinColumn({ name: 'patient_id' })
-  @ManyToOne(() => Patient, { nullable: false })
+  @ManyToOne(() => Patient, (patient) => patient.visits, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
   patient: Patient;
 
   @Column({ name: 'clinician_id', type: 'uuid' })
   clinicianId: string;
 
   @JoinColumn({ name: 'clinician_id' })
-  @ManyToOne(() => Clinician, { nullable: false })
+  @ManyToOne(() => Clinician, (clinician) => clinician.visits, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
   clinician: Clinician;
 
   @CreateDateColumn({ name: 'created_at' })
