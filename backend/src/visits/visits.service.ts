@@ -15,6 +15,7 @@ import {
   FindOptionsWhere,
   ILike,
   In,
+  IsNull,
   Repository,
 } from 'typeorm';
 import { Visit } from './entities/visit.entity';
@@ -110,7 +111,9 @@ export class VisitsService {
     const page = query.page ?? 1;
     const skip = (page - 1) * take;
 
-    const where: FindOptionsWhere<Visit> = {};
+    const where: FindOptionsWhere<Visit> = {
+      deletedAt: IsNull(),
+    };
 
     if (query.search) {
       where.notes = ILike(`%${query.search}%`);
@@ -262,7 +265,7 @@ export class VisitsService {
   }
 
   async remove(id: string): Promise<DeleteResultDto> {
-    const result = await this.visitsRepository.softDelete(id);
+    const result = await this.visitsRepository.delete(id);
 
     if (result.affected !== 1) {
       throw new NotFoundException(`Patient with id ${id} not found`);

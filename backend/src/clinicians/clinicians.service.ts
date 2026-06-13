@@ -165,7 +165,7 @@ export class CliniciansService {
   }
 
   async remove(id: string): Promise<DeleteResultDto> {
-    const result = await this.cliniciansRepository.softDelete(id);
+    const result = await this.cliniciansRepository.delete(id);
 
     if (result.affected !== 1) {
       throw new NotFoundException(`Clinician with id ${id} not found`);
