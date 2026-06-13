@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { usePatients } from "@/features/patients/patient.hooks";
+import { useClinicians } from "@/features/clinicians/clinician.hooks";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -17,21 +17,25 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-type PatientOrderBy = "givenName" | "familyName" | "dateOfBirth" | "createdAt";
+type ClinicianOrderBy =
+  | "givenName"
+  | "familyName"
+  | "dateOfBirth"
+  | "createdAt";
 
 type SortDirection = "ASC" | "DESC";
 
-export function PatientsListPage() {
+export function CliniciansListPage() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
 
   const [search, setSearch] = useState("");
 
-  const [orderBy, setOrderBy] = useState<PatientOrderBy>("createdAt");
+  const [orderBy, setOrderBy] = useState<ClinicianOrderBy>("createdAt");
 
   const [sortBy, setSortBy] = useState<SortDirection>("DESC");
 
-  const { data, isLoading } = usePatients({
+  const { data, isLoading } = useClinicians({
     page,
     limit,
     search: search || undefined,
@@ -41,7 +45,7 @@ export function PatientsListPage() {
 
   const totalPages = data ? Math.ceil(data.total / data.limit) : 0;
 
-  function toggleSort(column: PatientOrderBy) {
+  function toggleSort(column: ClinicianOrderBy) {
     if (column === orderBy) {
       setSortBy((prev) => (prev === "ASC" ? "DESC" : "ASC"));
     } else {
@@ -53,16 +57,16 @@ export function PatientsListPage() {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Patients</CardTitle>
+        <CardTitle>Clinicians</CardTitle>
 
         <Button asChild>
-          <Link to="/patients/new">Create Patient</Link>
+          <Link to="/clinicians/new">Create Clinician</Link>
         </Button>
       </CardHeader>
 
       <CardContent className="space-y-4">
         <Input
-          placeholder="Search patients..."
+          placeholder="Search clinicians..."
           value={search}
           onChange={(e) => {
             setPage(1);
@@ -108,29 +112,31 @@ export function PatientsListPage() {
               </TableHeader>
 
               <TableBody>
-                {data.data.map((patient) => (
-                  <TableRow key={patient.id}>
-                    <TableCell>{patient.givenName}</TableCell>
+                {data.data.map((clinician) => (
+                  <TableRow key={clinician.id}>
+                    <TableCell>{clinician.givenName}</TableCell>
 
-                    <TableCell>{patient.familyName}</TableCell>
+                    <TableCell>{clinician.familyName}</TableCell>
 
                     <TableCell>
-                      {new Date(patient.dateOfBirth).toLocaleDateString()}
+                      {new Date(clinician.dateOfBirth).toLocaleDateString()}
                     </TableCell>
 
-                    <TableCell>{patient.gender}</TableCell>
+                    <TableCell>{clinician.gender}</TableCell>
 
                     <TableCell>
-                      {new Date(patient.createdAt).toLocaleString()}
+                      {new Date(clinician.createdAt).toLocaleString()}
                     </TableCell>
 
                     <TableCell className="space-x-2">
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/patients/${patient.id}`}>View</Link>
+                        <Link to={`/clinicians/${clinician.id}`}>View</Link>
                       </Button>
 
                       <Button size="sm" asChild>
-                        <Link to={`/patients/${patient.id}/edit`}>Edit</Link>
+                        <Link to={`/clinicians/${clinician.id}/edit`}>
+                          Edit
+                        </Link>
                       </Button>
                     </TableCell>
                   </TableRow>
