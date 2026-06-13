@@ -1,15 +1,19 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   CreateClinicianRequestDto,
   ClinicianInfoDto,
   UpdateClinicianDto,
-  ClinicianDeletedDto,
   PaginatedCliniciansInfoDto,
+  ClinicianPaginationRequestDto,
 } from './dto/clinician-crud.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Clinician } from './entities/clinician.entity';
-import { Repository, ILike } from 'typeorm';
-import { PaginationRequestDto } from 'src/common/dto/pagination.dto';
+import { Repository, ILike, FindOptionsOrder } from 'typeorm';
+import { DeleteResultDto } from 'src/common/dto/deleteResult.dto';
 
 @Injectable()
 export class CliniciansService {
@@ -33,6 +37,23 @@ export class CliniciansService {
   async create(
     createClinicianDto: CreateClinicianRequestDto,
   ): Promise<ClinicianInfoDto> {
+    // Check if a clinician already exists with the same name and date of birth
+    // If it does, throw an error to prevent duplicate clinicians
+    const existingClinician = await this.cliniciansRepository.findOne({
+      where: {
+        givenName: createClinicianDto.givenName,
+        familyName: createClinicianDto.familyName,
+        dateOfBirth: new Date(createClinicianDto.dateOfBirth),
+        gender: createClinicianDto.gender,
+      },
+    });
+
+    if (existingClinician) {
+      throw new ConflictException(
+        'Clinician already exists with the same name and date of birth',
+      );
+    }
+
     const clinicianObject =
       this.cliniciansRepository.create(createClinicianDto);
     const clinician = await this.cliniciansRepository.save(clinicianObject);
@@ -41,7 +62,7 @@ export class CliniciansService {
   }
 
   async findAll(
-    query: PaginationRequestDto,
+    query: ClinicianPaginationRequestDto,
   ): Promise<PaginatedCliniciansInfoDto> {
     const take = query.limit ?? 10;
     const page = query.page ?? 1;
@@ -54,7 +75,15 @@ export class CliniciansService {
         ]
       : {};
 
-    const results = await this.cliniciansRepository.findAndCount({
+    const order: FindOptionsOrder<Clinician> = query.orderBy
+      ? {
+          [query.orderBy]: query.sortBy,
+        }
+      : {
+          createdAt: 'ASC',
+        };
+
+    const [data, total] = await this.cliniciansRepository.findAndCount({
       select: {
         id: true,
         givenName: true,
@@ -65,20 +94,32 @@ export class CliniciansService {
         updatedAt: true,
       },
       where,
+      order,
       take,
       skip,
     });
 
     return {
-      data: results[0],
-      total: results[1],
+      data,
+      total,
       limit: take,
       page,
     };
   }
 
   async findOne(id: string): Promise<ClinicianInfoDto> {
-    const clinician = await this.cliniciansRepository.findOneBy({ id });
+    const clinician = await this.cliniciansRepository.findOne({
+      where: { id },
+      select: {
+        id: true,
+        givenName: true,
+        familyName: true,
+        dateOfBirth: true,
+        gender: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
 
     if (!clinician) {
       throw new NotFoundException(`Clinician with id ${id} not found`);
@@ -96,13 +137,32 @@ export class CliniciansService {
       throw new NotFoundException(`Clinician with id ${id} not found`);
     }
 
+    // Check if a clinician already exists with the same name and date of birth
+    // If it does, throw an error to prevent duplicate clinicians
+    const existingClinician = await this.cliniciansRepository.findOne({
+      where: {
+        givenName: updateClinicianDto.givenName,
+        familyName: updateClinicianDto.familyName,
+        ...(updateClinicianDto.dateOfBirth && {
+          dateOfBirth: new Date(updateClinicianDto.dateOfBirth),
+        }),
+        gender: updateClinicianDto.gender,
+      },
+    });
+
+    if (existingClinician) {
+      throw new ConflictException(
+        'Clinician already exists with the same name and date of birth',
+      );
+    }
+
     Object.assign(clinician, updateClinicianDto);
     const updatedClinician = await this.cliniciansRepository.save(clinician);
 
     return this.toClinicianInfoDto(updatedClinician);
   }
 
-  async remove(id: string): Promise<ClinicianDeletedDto> {
+  async remove(id: string): Promise<DeleteResultDto> {
     const result = await this.cliniciansRepository.softDelete(id);
 
     if (result.affected !== 1) {

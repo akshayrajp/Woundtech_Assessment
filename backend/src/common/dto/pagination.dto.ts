@@ -1,5 +1,13 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Max, Min, MinLength } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  Max,
+  Min,
+  MinLength,
+} from 'class-validator';
+import { SortDirection } from '../enums/sortDirection.enum';
 
 export class PaginationRequestDto {
   @IsOptional()
@@ -18,10 +26,13 @@ export class PaginationRequestDto {
   @IsOptional()
   @MinLength(3)
   search?: string;
+
+  @IsOptional()
+  @IsEnum(SortDirection)
+  sortBy: SortDirection = SortDirection.ASC;
 }
 
-export class BasePaginationResponseDto<T> {
-  data: T[];
+export class BasePaginationResponseDto {
   total: number;
   page: number;
   limit: number;

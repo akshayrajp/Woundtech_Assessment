@@ -1,34 +1,55 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import { PatientsService } from './patients.service';
-import { CreatePatientDto } from './dto/create-patient.dto';
-import { UpdatePatientDto } from './dto/update-patient.dto';
+import {
+  CreatePatientRequestDto,
+  PaginatedPatientsInfoDto,
+  PatientInfoDto,
+  PatientPaginationRequestDto,
+  UpdatePatientDto,
+} from './dto/patient-crud.dto';
+import { DeleteResultDto } from 'src/common/dto/deleteResult.dto';
 
 @Controller('patients')
 export class PatientsController {
   constructor(private readonly patientsService: PatientsService) {}
 
   @Post()
-  create(@Body() createPatientDto: CreatePatientDto) {
-    return this.patientsService.create(createPatientDto);
+  create(@Body() dto: CreatePatientRequestDto): Promise<PatientInfoDto> {
+    return this.patientsService.create(dto);
   }
 
   @Get()
-  findAll() {
-    return this.patientsService.findAll();
+  findAll(
+    @Query() query: PatientPaginationRequestDto,
+  ): Promise<PaginatedPatientsInfoDto> {
+    return this.patientsService.findAll(query);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.patientsService.findOne(+id);
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<PatientInfoDto> {
+    return this.patientsService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePatientDto: UpdatePatientDto) {
-    return this.patientsService.update(+id, updatePatientDto);
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdatePatientDto,
+  ): Promise<PatientInfoDto> {
+    return this.patientsService.update(id, dto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.patientsService.remove(+id);
+  remove(@Param('id', ParseUUIDPipe) id: string): Promise<DeleteResultDto> {
+    return this.patientsService.remove(id);
   }
 }

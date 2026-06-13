@@ -14,10 +14,10 @@ import {
   CreateClinicianRequestDto,
   ClinicianInfoDto,
   UpdateClinicianDto,
-  ClinicianDeletedDto,
   PaginatedCliniciansInfoDto,
+  ClinicianPaginationRequestDto,
 } from './dto/clinician-crud.dto';
-import { PaginationRequestDto } from 'src/common/dto/pagination.dto';
+import { DeleteResultDto } from 'src/common/dto/deleteResult.dto';
 
 @Controller('clinicians')
 export class CliniciansController {
@@ -32,7 +32,7 @@ export class CliniciansController {
 
   @Get()
   findAll(
-    @Query() query: PaginationRequestDto,
+    @Query() query: ClinicianPaginationRequestDto,
   ): Promise<PaginatedCliniciansInfoDto> {
     return this.cliniciansService.findAll(query);
   }
@@ -51,7 +51,7 @@ export class CliniciansController {
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<ClinicianDeletedDto> {
+  remove(@Param('id', ParseUUIDPipe) id: string): Promise<DeleteResultDto> {
     return this.cliniciansService.remove(id);
   }
 }

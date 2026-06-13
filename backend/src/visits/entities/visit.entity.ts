@@ -28,7 +28,7 @@ export class Visit {
 
   @JoinColumn({ name: 'clinician_id' })
   @ManyToOne(() => Clinician, { nullable: false })
-  clinician: Patient;
+  clinician: Clinician;
 
   @CreateDateColumn()
   createdAt: Date;

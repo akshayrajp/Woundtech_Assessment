@@ -13,7 +13,7 @@ import {
   PaginationRequestDto,
 } from 'src/common/dto/pagination.dto';
 
-export class CreateClinicianRequestDto {
+export class CreatePatientRequestDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
@@ -33,11 +33,9 @@ export class CreateClinicianRequestDto {
   gender: Gender;
 }
 
-export class UpdateClinicianDto extends PartialType(
-  CreateClinicianRequestDto,
-) {}
+export class UpdatePatientDto extends PartialType(CreatePatientRequestDto) {}
 
-export class ClinicianInfoDto {
+export class PatientInfoDto {
   id: string;
   givenName: string;
   familyName: string;
@@ -47,19 +45,19 @@ export class ClinicianInfoDto {
   updatedAt: Date;
 }
 
-export enum ClinicianOrderBy {
+export enum PatientOrderBy {
   GIVEN_NAME = 'givenName',
   FAMILY_NAME = 'familyName',
   DATE_OF_BIRTH = 'dateOfBirth',
   CREATED_AT = 'createdAt',
 }
 
-export class ClinicianPaginationRequestDto extends PaginationRequestDto {
+export class PatientPaginationRequestDto extends PaginationRequestDto {
   @IsOptional()
-  @IsEnum(ClinicianOrderBy)
-  orderBy?: ClinicianOrderBy;
+  @IsEnum(PatientOrderBy)
+  orderBy?: PatientOrderBy;
 }
 
-export class PaginatedCliniciansInfoDto extends BasePaginationResponseDto {
-  data: ClinicianInfoDto[];
+export class PaginatedPatientsInfoDto extends BasePaginationResponseDto {
+  data: PatientInfoDto[];
 }
