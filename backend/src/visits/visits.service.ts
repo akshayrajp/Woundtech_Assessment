@@ -1,6 +1,5 @@
 import {
   ConflictException,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -13,9 +12,9 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsOrder, ILike, Repository } from 'typeorm';
 import { Visit } from './entities/visit.entity';
-import { PatientsService } from 'src/patients/patients.service';
-import { CliniciansService } from 'src/clinicians/clinicians.service';
 import { DeleteResultDto } from 'src/common/dto/deleteResult.dto';
+import { Patient } from 'src/patients/entities/patient.entity';
+import { Clinician } from 'src/clinicians/entities/clinician.entity';
 
 @Injectable()
 export class VisitsService {
@@ -23,11 +22,11 @@ export class VisitsService {
     @InjectRepository(Visit)
     private visitsRepository: Repository<Visit>,
 
-    @Inject(PatientsService)
-    private patientsService: PatientsService,
+    @InjectRepository(Patient)
+    private patientsRepository: Repository<Patient>,
 
-    @Inject(CliniciansService)
-    private cliniciansService: CliniciansService,
+    @InjectRepository(Clinician)
+    private cliniciansRepository: Repository<Clinician>,
   ) {}
 
   private toVisitInfoDto(visit: Visit) {
@@ -49,13 +48,21 @@ export class VisitsService {
   }
 
   async create(createVisitDto: CreateVisitRequestDto): Promise<VisitInfoDto> {
-    const patient = await this.patientsService.findOne(
-      createVisitDto.patientId,
-    );
+    const patient = await this.patientsRepository.findOneBy({
+      id: createVisitDto.patientId,
+    });
 
-    const clinician = await this.cliniciansService.findOne(
-      createVisitDto.clinicianId,
-    );
+    if (!patient) {
+      throw new NotFoundException('Patient not found');
+    }
+
+    const clinician = await this.cliniciansRepository.findOneBy({
+      id: createVisitDto.clinicianId,
+    });
+
+    if (!clinician) {
+      throw new NotFoundException('Clinician not found');
+    }
 
     // Check if a visit already exists for the given patient and clinician at that time
     // If it does, throw an error to prevent duplicate visits
@@ -200,17 +207,27 @@ export class VisitsService {
     }
 
     if (updateVisitDto.patientId) {
-      const patient = await this.patientsService.findOne(
-        updateVisitDto.patientId,
-      );
+      const patient = await this.patientsRepository.findOneBy({
+        id: updateVisitDto.patientId,
+      });
+
+      if (!patient) {
+        throw new NotFoundException('Patient not found');
+      }
+
       Object.assign(visit, { patient });
       delete updateVisitDto.patientId;
     }
 
     if (updateVisitDto.clinicianId) {
-      const clinician = await this.cliniciansService.findOne(
-        updateVisitDto.clinicianId,
-      );
+      const clinician = await this.cliniciansRepository.findOneBy({
+        id: updateVisitDto.clinicianId,
+      });
+
+      if (!clinician) {
+        throw new NotFoundException('Clinician not found');
+      }
+
       Object.assign(visit, { clinician });
       delete updateVisitDto.clinicianId;
     }
