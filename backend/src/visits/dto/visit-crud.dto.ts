@@ -1,5 +1,7 @@
 import { PartialType } from '@nestjs/mapped-types';
+import { Transform } from 'class-transformer';
 import {
+  IsArray,
   IsDateString,
   IsEnum,
   IsNotEmpty,
@@ -50,6 +52,18 @@ export class VisitPaginationRequestDto extends PaginationRequestDto {
   @IsOptional()
   @IsEnum(VisitOrderBy)
   orderBy?: VisitOrderBy;
+
+  @IsOptional()
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  @IsArray()
+  @IsUUID('4', { each: true })
+  patientIds?: string[];
+
+  @IsOptional()
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  @IsArray()
+  @IsUUID('4', { each: true })
+  clinicianIds?: string[];
 }
 
 export class PaginatedVisitInfoDto extends BasePaginationResponseDto {

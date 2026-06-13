@@ -10,32 +10,32 @@ import {
   OneToMany,
 } from 'typeorm';
 
-@Entity()
+@Entity({ name: 'clinicians' })
 export class Clinician {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', name: 'given_name' })
   givenName: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', name: 'family_name' })
   familyName: string;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', name: 'date_of_birth' })
   dateOfBirth: Date;
 
-  @Column({ type: 'enum', enum: Gender })
+  @Column({ type: 'enum', enum: Gender, name: 'gender' })
   gender: Gender;
 
   @OneToMany(() => Visit, (visit) => visit.clinician)
   visits: Visit[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @DeleteDateColumn()
+  @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt: Date;
 }

@@ -136,16 +136,19 @@ export class PatientsService {
       throw new NotFoundException(`Patient with id ${id} not found`);
     }
 
+    // Update values
+    Object.assign(patient, updatePatientDto);
+
     // Check if a patient already exists with the same name and date of birth
     // If it does, throw an error to prevent duplicate patients
     const existingPatient = await this.patientsRepository.findOne({
       where: {
-        givenName: updatePatientDto.givenName,
-        familyName: updatePatientDto.familyName,
-        ...(updatePatientDto.dateOfBirth && {
-          dateOfBirth: new Date(updatePatientDto.dateOfBirth),
+        givenName: patient.givenName,
+        familyName: patient.familyName,
+        ...(patient.dateOfBirth && {
+          dateOfBirth: new Date(patient.dateOfBirth),
         }),
-        gender: updatePatientDto.gender,
+        gender: patient.gender,
       },
     });
 
@@ -155,7 +158,6 @@ export class PatientsService {
       );
     }
 
-    Object.assign(patient, updatePatientDto);
     const updatedPatient = await this.patientsRepository.save(patient);
 
     return this.toPatientInfoDto(updatedPatient);

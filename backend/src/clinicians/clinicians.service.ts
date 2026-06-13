@@ -137,16 +137,19 @@ export class CliniciansService {
       throw new NotFoundException(`Clinician with id ${id} not found`);
     }
 
+    // Update values
+    Object.assign(clinician, updateClinicianDto);
+
     // Check if a clinician already exists with the same name and date of birth
     // If it does, throw an error to prevent duplicate clinicians
     const existingClinician = await this.cliniciansRepository.findOne({
       where: {
-        givenName: updateClinicianDto.givenName,
-        familyName: updateClinicianDto.familyName,
-        ...(updateClinicianDto.dateOfBirth && {
-          dateOfBirth: new Date(updateClinicianDto.dateOfBirth),
+        givenName: clinician.givenName,
+        familyName: clinician.familyName,
+        ...(clinician.dateOfBirth && {
+          dateOfBirth: new Date(clinician.dateOfBirth),
         }),
-        gender: updateClinicianDto.gender,
+        gender: clinician.gender,
       },
     });
 
@@ -156,7 +159,6 @@ export class CliniciansService {
       );
     }
 
-    Object.assign(clinician, updateClinicianDto);
     const updatedClinician = await this.cliniciansRepository.save(clinician);
 
     return this.toClinicianInfoDto(updatedClinician);

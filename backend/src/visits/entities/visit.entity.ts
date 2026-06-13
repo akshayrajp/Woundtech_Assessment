@@ -11,31 +11,37 @@ import {
   JoinColumn,
 } from 'typeorm';
 
-@Entity()
+@Entity({ name: 'visits' })
 export class Visit {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'timestamptz' })
+  @Column({ type: 'timestamptz', name: 'visited_at' })
   visitedAt: Date;
 
   @Column({ type: 'text', nullable: true })
   notes?: string;
 
+  @Column({ name: 'patient_id', type: 'uuid' })
+  patientId: string;
+
   @JoinColumn({ name: 'patient_id' })
   @ManyToOne(() => Patient, { nullable: false })
   patient: Patient;
+
+  @Column({ name: 'clinician_id', type: 'uuid' })
+  clinicianId: string;
 
   @JoinColumn({ name: 'clinician_id' })
   @ManyToOne(() => Clinician, { nullable: false })
   clinician: Clinician;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @DeleteDateColumn()
+  @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt: Date;
 }

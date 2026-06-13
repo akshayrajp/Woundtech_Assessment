@@ -10,7 +10,13 @@ import {
   VisitPaginationRequestDto,
 } from './dto/visit-crud.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsOrder, ILike, Repository } from 'typeorm';
+import {
+  FindOptionsOrder,
+  FindOptionsWhere,
+  ILike,
+  In,
+  Repository,
+} from 'typeorm';
 import { Visit } from './entities/visit.entity';
 import { DeleteResultDto } from 'src/common/dto/deleteResult.dto';
 import { Patient } from 'src/patients/entities/patient.entity';
@@ -68,8 +74,8 @@ export class VisitsService {
     // If it does, throw an error to prevent duplicate visits
     const existingVisit = await this.visitsRepository.findOne({
       where: {
-        patient,
-        clinician,
+        patientId: createVisitDto.patientId,
+        clinicianId: createVisitDto.clinicianId,
         visitedAt: createVisitDto.visitedAt,
       },
     });
@@ -81,15 +87,22 @@ export class VisitsService {
     }
 
     const visitObject = this.visitsRepository.create({
-      patient,
-      clinician,
+      patientId: createVisitDto.patientId,
+      clinicianId: createVisitDto.clinicianId,
       visitedAt: createVisitDto.visitedAt,
       notes: createVisitDto.notes,
     });
 
     const savedVisit = await this.visitsRepository.save(visitObject);
 
-    return this.toVisitInfoDto(savedVisit);
+    const visit = await this.visitsRepository.findOneOrFail({
+      where: { id: savedVisit.id },
+      relations: {
+        patient: true,
+        clinician: true,
+      },
+    });
+    return this.toVisitInfoDto(visit);
   }
 
   async findAll(query: VisitPaginationRequestDto) {
@@ -97,14 +110,26 @@ export class VisitsService {
     const page = query.page ?? 1;
     const skip = (page - 1) * take;
 
-    const where = query.search ? { notes: ILike(`%${query.search}%`) } : {};
+    const where: FindOptionsWhere<Visit> = {};
+
+    if (query.search) {
+      where.notes = ILike(`%${query.search}%`);
+    }
+
+    if (query.patientIds) {
+      where.patientId = In(query.patientIds);
+    }
+
+    if (query.clinicianIds) {
+      where.clinicianId = In(query.clinicianIds);
+    }
 
     const order: FindOptionsOrder<Visit> = query.orderBy
       ? {
           [query.orderBy]: query.sortBy,
         }
       : {
-          createdAt: 'ASC',
+          visitedAt: 'DESC',
         };
 
     const [data, total] = await this.visitsRepository.findAndCount({
@@ -185,27 +210,6 @@ export class VisitsService {
       throw new NotFoundException(`Visit with ID ${id} not found`);
     }
 
-    // Check if a visit already exists with the same details as the update dto
-    // If it does, throw an error to prevent duplicate visits
-    const duplicateVisit = await this.visitsRepository.findOne({
-      where: {
-        patient: {
-          id: updateVisitDto.patientId,
-        },
-        clinician: {
-          id: updateVisitDto.clinicianId,
-        },
-        visitedAt: updateVisitDto.visitedAt,
-        notes: updateVisitDto.notes,
-      },
-    });
-
-    if (duplicateVisit) {
-      throw new ConflictException(
-        'Visit already exists for this patient and clinician at that time',
-      );
-    }
-
     if (updateVisitDto.patientId) {
       const patient = await this.patientsRepository.findOneBy({
         id: updateVisitDto.patientId,
@@ -214,9 +218,6 @@ export class VisitsService {
       if (!patient) {
         throw new NotFoundException('Patient not found');
       }
-
-      Object.assign(visit, { patient });
-      delete updateVisitDto.patientId;
     }
 
     if (updateVisitDto.clinicianId) {
@@ -227,14 +228,36 @@ export class VisitsService {
       if (!clinician) {
         throw new NotFoundException('Clinician not found');
       }
-
-      Object.assign(visit, { clinician });
-      delete updateVisitDto.clinicianId;
     }
 
     Object.assign(visit, updateVisitDto);
-    const updatedVisit = await this.visitsRepository.save(visit);
 
+    // Check if a visit already exists with the same details as the update dto
+    // If it does, throw an error to prevent duplicate visits
+    const duplicateVisit = await this.visitsRepository.findOne({
+      where: {
+        patientId: visit.patientId,
+        clinicianId: visit.clinicianId,
+        visitedAt: visit.visitedAt,
+        notes: visit.notes,
+      },
+    });
+
+    if (duplicateVisit) {
+      throw new ConflictException(
+        'Visit already exists for this patient and clinician at that time',
+      );
+    }
+
+    await this.visitsRepository.save(visit);
+
+    const updatedVisit = await this.visitsRepository.findOneOrFail({
+      where: { id },
+      relations: {
+        patient: true,
+        clinician: true,
+      },
+    });
     return this.toVisitInfoDto(updatedVisit);
   }
 
