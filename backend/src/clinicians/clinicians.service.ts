@@ -14,12 +14,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Clinician } from './entities/clinician.entity';
 import { Repository, ILike, FindOptionsOrder } from 'typeorm';
 import { DeleteResultDto } from 'src/common/dto/deleteResult.dto';
+import { PinoLogger } from 'nestjs-pino';
 
 @Injectable()
 export class CliniciansService {
   constructor(
     @InjectRepository(Clinician)
     private cliniciansRepository: Repository<Clinician>,
+    private readonly logger: PinoLogger,
   ) {}
 
   private toClinicianInfoDto(clinician: Clinician): ClinicianInfoDto {
@@ -49,14 +51,17 @@ export class CliniciansService {
     });
 
     if (existingClinician) {
-      throw new ConflictException(
-        'Clinician already exists with the same name and date of birth',
-      );
+      const errMsg =
+        'Clinician already exists with the same name and date of birth';
+      this.logger.error(errMsg);
+      throw new ConflictException(errMsg);
     }
 
     const clinicianObject =
       this.cliniciansRepository.create(createClinicianDto);
     const clinician = await this.cliniciansRepository.save(clinicianObject);
+
+    this.logger.info(`Clinician created: ${clinician.id}`);
 
     return this.toClinicianInfoDto(clinician);
   }
@@ -122,7 +127,9 @@ export class CliniciansService {
     });
 
     if (!clinician) {
-      throw new NotFoundException(`Clinician with id ${id} not found`);
+      const errMsg = `Clinician with id ${id} not found`;
+      this.logger.error(errMsg);
+      throw new NotFoundException(errMsg);
     }
 
     return this.toClinicianInfoDto(clinician);
@@ -134,7 +141,9 @@ export class CliniciansService {
   ): Promise<ClinicianInfoDto> {
     const clinician = await this.cliniciansRepository.findOneBy({ id });
     if (!clinician) {
-      throw new NotFoundException(`Clinician with id ${id} not found`);
+      const errMsg = `Clinician with id ${id} not found`;
+      this.logger.error(errMsg);
+      throw new NotFoundException(errMsg);
     }
 
     // Update values
@@ -154,12 +163,14 @@ export class CliniciansService {
     });
 
     if (existingClinician) {
-      throw new ConflictException(
-        'Clinician already exists with the same name and date of birth',
-      );
+      const errMsg =
+        'Clinician already exists with the same name and date of birth';
+      this.logger.error(errMsg);
+      throw new ConflictException(errMsg);
     }
 
     const updatedClinician = await this.cliniciansRepository.save(clinician);
+    this.logger.info(`Clinician with id ${id} updated successfully`);
 
     return this.toClinicianInfoDto(updatedClinician);
   }
@@ -168,8 +179,12 @@ export class CliniciansService {
     const result = await this.cliniciansRepository.delete(id);
 
     if (result.affected !== 1) {
-      throw new NotFoundException(`Clinician with id ${id} not found`);
+      const errMsg = `Clinician with id ${id} not found`;
+      this.logger.error(errMsg);
+      throw new NotFoundException(errMsg);
     }
+
+    this.logger.info(`Clinician with id ${id} deleted successfully`);
 
     return {
       id,

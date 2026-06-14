@@ -22,6 +22,7 @@ import { Visit } from './entities/visit.entity';
 import { DeleteResultDto } from 'src/common/dto/deleteResult.dto';
 import { Patient } from 'src/patients/entities/patient.entity';
 import { Clinician } from 'src/clinicians/entities/clinician.entity';
+import { PinoLogger } from 'nestjs-pino';
 
 @Injectable()
 export class VisitsService {
@@ -34,6 +35,8 @@ export class VisitsService {
 
     @InjectRepository(Clinician)
     private cliniciansRepository: Repository<Clinician>,
+
+    private logger: PinoLogger,
   ) {}
 
   private toVisitInfoDto(visit: Visit) {
@@ -60,7 +63,9 @@ export class VisitsService {
     });
 
     if (!patient) {
-      throw new NotFoundException('Patient not found');
+      const errMsg = `Patient with id ${createVisitDto.patientId} not found`;
+      this.logger.error(errMsg);
+      throw new NotFoundException(errMsg);
     }
 
     const clinician = await this.cliniciansRepository.findOneBy({
@@ -68,7 +73,9 @@ export class VisitsService {
     });
 
     if (!clinician) {
-      throw new NotFoundException('Clinician not found');
+      const errMsg = `Clinician with id ${createVisitDto.clinicianId} not found`;
+      this.logger.error(errMsg);
+      throw new NotFoundException(errMsg);
     }
 
     // Check if a visit already exists for the given patient and clinician at that time
@@ -82,9 +89,9 @@ export class VisitsService {
     });
 
     if (existingVisit) {
-      throw new ConflictException(
-        'Visit already exists for this patient and clinician at that time',
-      );
+      const errMsg = `Visit already exists for this patient ${createVisitDto.patientId} and clinician ${createVisitDto.clinicianId} at that time ${createVisitDto.visitedAt.toDateString()}`;
+      this.logger.error(errMsg);
+      throw new ConflictException(errMsg);
     }
 
     const visitObject = this.visitsRepository.create({
@@ -95,6 +102,7 @@ export class VisitsService {
     });
 
     const savedVisit = await this.visitsRepository.save(visitObject);
+    this.logger.info(`Visit created successfully with id ${savedVisit.id}`);
 
     const visit = await this.visitsRepository.findOneOrFail({
       where: { id: savedVisit.id },
@@ -197,7 +205,9 @@ export class VisitsService {
     });
 
     if (!visit) {
-      throw new NotFoundException(`Visit with ID ${id} not found`);
+      const errMsg = `Visit with ID ${id} not found`;
+      this.logger.error(errMsg);
+      throw new NotFoundException(errMsg);
     }
 
     return this.toVisitInfoDto(visit);
@@ -210,7 +220,9 @@ export class VisitsService {
     // Check if a visit by this ID exists
     const visit = await this.visitsRepository.findOneBy({ id });
     if (!visit) {
-      throw new NotFoundException(`Visit with ID ${id} not found`);
+      const errMsg = `Visit with ID ${id} not found`;
+      this.logger.error(errMsg);
+      throw new NotFoundException(errMsg);
     }
 
     if (updateVisitDto.patientId) {
@@ -219,7 +231,9 @@ export class VisitsService {
       });
 
       if (!patient) {
-        throw new NotFoundException('Patient not found');
+        const errMsg = `Patient with ID ${updateVisitDto.patientId} not found`;
+        this.logger.error(errMsg);
+        throw new NotFoundException(errMsg);
       }
     }
 
@@ -229,7 +243,9 @@ export class VisitsService {
       });
 
       if (!clinician) {
-        throw new NotFoundException('Clinician not found');
+        const errMsg = `Clinician with ID ${updateVisitDto.clinicianId} not found`;
+        this.logger.error(errMsg);
+        throw new NotFoundException(errMsg);
       }
     }
 
@@ -247,12 +263,13 @@ export class VisitsService {
     });
 
     if (duplicateVisit) {
-      throw new ConflictException(
-        'Visit already exists for this patient and clinician at that time',
-      );
+      const errMsg = `Visit already exists for this patient ${visit.patientId} and clinician ${visit.clinicianId} at that time ${visit.visitedAt.toDateString()}`;
+      this.logger.error(errMsg);
+      throw new ConflictException(errMsg);
     }
 
     await this.visitsRepository.save(visit);
+    this.logger.info(`Visit with ID ${id} updated successfully`);
 
     const updatedVisit = await this.visitsRepository.findOneOrFail({
       where: { id },
@@ -268,9 +285,12 @@ export class VisitsService {
     const result = await this.visitsRepository.delete(id);
 
     if (result.affected !== 1) {
-      throw new NotFoundException(`Patient with id ${id} not found`);
+      const errMsg = `Visit with ID ${id} not found`;
+      this.logger.error(errMsg);
+      throw new NotFoundException(errMsg);
     }
 
+    this.logger.info(`Visit with ID ${id} deleted successfully`);
     return {
       id,
       deleted: true,

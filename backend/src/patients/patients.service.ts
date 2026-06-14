@@ -14,12 +14,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Patient } from './entities/patient.entity';
 import { Repository, ILike, FindOptionsOrder } from 'typeorm';
 import { DeleteResultDto } from 'src/common/dto/deleteResult.dto';
+import { PinoLogger } from 'nestjs-pino';
 
 @Injectable()
 export class PatientsService {
   constructor(
     @InjectRepository(Patient)
     private patientsRepository: Repository<Patient>,
+
+    private readonly logger: PinoLogger,
   ) {}
 
   private toPatientInfoDto(patient: Patient): PatientInfoDto {
@@ -49,13 +52,16 @@ export class PatientsService {
     });
 
     if (existingPatient) {
-      throw new ConflictException(
-        'Patient already exists with the same name and date of birth',
-      );
+      const errMsg =
+        'Patient already exists with the same name and date of birth';
+      this.logger.error(errMsg);
+      throw new ConflictException(errMsg);
     }
 
     const patientObject = this.patientsRepository.create(createPatientDto);
     const patient = await this.patientsRepository.save(patientObject);
+
+    this.logger.info(`Patient created: ${patient.id}`);
 
     return this.toPatientInfoDto(patient);
   }
@@ -121,7 +127,9 @@ export class PatientsService {
     });
 
     if (!patient) {
-      throw new NotFoundException(`Patient with id ${id} not found`);
+      const errMsg = `Patient with id ${id} not found`;
+      this.logger.error(errMsg);
+      throw new NotFoundException(errMsg);
     }
 
     return this.toPatientInfoDto(patient);
@@ -133,7 +141,9 @@ export class PatientsService {
   ): Promise<PatientInfoDto> {
     const patient = await this.patientsRepository.findOneBy({ id });
     if (!patient) {
-      throw new NotFoundException(`Patient with id ${id} not found`);
+      const errMsg = `Patient with id ${id} not found`;
+      this.logger.error(errMsg);
+      throw new NotFoundException(errMsg);
     }
 
     // Update values
@@ -153,12 +163,14 @@ export class PatientsService {
     });
 
     if (existingPatient) {
-      throw new ConflictException(
-        'Patient already exists with the same name and date of birth',
-      );
+      const errMsg =
+        'Patient already exists with the same name and date of birth';
+      this.logger.error(errMsg);
+      throw new ConflictException(errMsg);
     }
 
     const updatedPatient = await this.patientsRepository.save(patient);
+    this.logger.info(`Updated patient with id ${id}`);
 
     return this.toPatientInfoDto(updatedPatient);
   }
@@ -167,8 +179,12 @@ export class PatientsService {
     const result = await this.patientsRepository.delete(id);
 
     if (result.affected !== 1) {
-      throw new NotFoundException(`Patient with id ${id} not found`);
+      const errMsg = `Patient with id ${id} not found`;
+      this.logger.error(errMsg);
+      throw new NotFoundException(errMsg);
     }
+
+    this.logger.info(`Deleted patient with id ${id}`);
 
     return {
       id,
