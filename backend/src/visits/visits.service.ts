@@ -262,7 +262,7 @@ export class VisitsService {
       },
     });
 
-    if (duplicateVisit && duplicateVisit.id !== id) {
+    if (duplicateVisit) {
       const errMsg = `Visit already exists for this patient ${visit.patientId} and clinician ${visit.clinicianId} at that time ${visit.visitedAt.toDateString()}`;
       this.logger.error(errMsg);
       throw new ConflictException(errMsg);
