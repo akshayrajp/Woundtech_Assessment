@@ -41,5 +41,5 @@ export class Patient {
   updatedAt: Date;
 
   @DeleteDateColumn({ name: 'deleted_at' })
-  deletedAt: Date;
+  deletedAt?: Date | null;
 }
